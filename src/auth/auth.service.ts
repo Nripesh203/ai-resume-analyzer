@@ -38,13 +38,13 @@ export class AuthService {
   }
 
   async login(loginDto: LoginDto) {
-    const query = `SELECT user_id, username, hashed_password
+    const query = `SELECT user_id, username, password_hash
                   FROM users
                   WHERE username = $1`;
 
     const result = await this.pool.query(query, [loginDto.username]);
 
-    const user = result.rows[1];
+    const user = result.rows[0];
 
     if (
       !user ||

@@ -1,6 +1,6 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Pool } from 'pg';
-import { CreateResumeDto } from '../dto/create-resume.dto';
+import { CreateResumeDto } from '../auth/dto/create-resume.dto';
 
 @Injectable()
 export class ResumeService {
@@ -34,6 +34,9 @@ export class ResumeService {
                    WHERE resume_id = $1`;
 
     const result = await this.pool.query(query, [id]);
+
+    if (result.rows.length === 0)
+      throw new NotFoundException(`Resume with ID ${id} not found.`);
 
     return result.rows[0];
   }

@@ -7,6 +7,7 @@ import {
 import { Pool } from 'pg';
 import { LoginDto, RegisterDto } from './dto/auth.dto';
 import * as bcrypt from 'bcrypt';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AuthService {
@@ -46,10 +47,7 @@ export class AuthService {
 
     const user = result.rows[0];
 
-    if (
-      !user ||
-      !(await bcrypt.compare(loginDto.password, user.hashed_password))
-    )
+    if (!user || !(await bcrypt.compare(loginDto.password, user.password_hash)))
       throw new UnauthorizedException('Invalid Credentials');
 
     const payload = { sub: user.user_id, username: user.username };

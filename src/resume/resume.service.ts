@@ -1,6 +1,7 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Pool } from 'pg';
-import { CreateResumeDto } from '../auth/dto/create-resume.dto';
+import { CreateResumeDto } from '../dto/create-resume.dto';
+import { UpdateResumeDto } from '../dto/update-resume.dto';
 
 @Injectable()
 export class ResumeService {
@@ -39,5 +40,40 @@ export class ResumeService {
       throw new NotFoundException(`Resume with ID ${id} not found.`);
 
     return result.rows[0];
+  }
+
+  async updateResume(
+    userId: number,
+    resumeId: number,
+    updateResumeDto: UpdateResumeDto,
+  ) {
+    const query = `UPDATE resume
+                   SET resume_text = $1
+                   WHERE user_id = $2 AND resume_id = $3
+                   RETURNING *`;
+
+    const result = await this.pool.query(query, [
+      updateResumeDto.resume_text,
+      userId,
+      resumeId,
+    ]);
+
+    if (result.rows.length === 0)
+      throw new NotFoundException(`Resume with ID ${resumeId} not found.`);
+
+    return result.rows[0];
+  }
+
+  async deleteResume(userId: number, resumeId: number) {
+    const query = `DELETE FROM resume
+                   WHERE user_id = $1 AND resume_id = $2
+                   RETURNING resume_id`;
+
+    const result = await this.pool.query(query, [userId, resumeId]);
+
+    if (result.rows.length === 0)
+      throw new NotFoundException(`Resume with ID ${resumeId} not found.`);
+
+    return `Resume with ID ${resumeId} deleted successfully.`;
   }
 }

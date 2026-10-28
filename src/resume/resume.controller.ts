@@ -1,16 +1,19 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseIntPipe,
   Post,
+  Put,
   Req,
   UseGuards,
 } from '@nestjs/common';
 import { ResumeService } from './resume.service';
-import { CreateResumeDto } from '../auth/dto/create-resume.dto';
+import { CreateResumeDto } from '../dto/create-resume.dto';
 import { JwtGuard } from '../common/guards/jwt.guard';
+import { UpdateResumeDto } from '../dto/update-resume.dto';
 
 @Controller('api')
 export class ResumeController {
@@ -40,5 +43,30 @@ export class ResumeController {
       Number(req.user.userId),
       createResumeDto,
     );
+  }
+
+  @UseGuards(JwtGuard)
+  @Put('update-resume/:id')
+  async updateResume(
+    @Req()
+    req: Request & { user: { userId: string | number; username: string } },
+    @Param('id', ParseIntPipe) resumeId: number,
+    @Body() updateResumeDto: UpdateResumeDto,
+  ) {
+    return this.resumeService.updateResume(
+      Number(req.user.userId),
+      resumeId,
+      updateResumeDto,
+    );
+  }
+
+  @UseGuards(JwtGuard)
+  @Delete('delete-resume/:id')
+  async deleteResume(
+    @Req()
+    req: Request & { user: { userId: number | string; username: string } },
+    @Param('id', ParseIntPipe) resumeId: number,
+  ) {
+    return this.resumeService.deleteResume(Number(req.user.userId), resumeId);
   }
 }

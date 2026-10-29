@@ -14,23 +14,27 @@ import { ResumeService } from './resume.service';
 import { CreateResumeDto } from '../dto/create-resume.dto';
 import { JwtGuard } from '../common/guards/jwt.guard';
 import { UpdateResumeDto } from '../dto/update-resume.dto';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 @Controller('api')
 export class ResumeController {
   constructor(private readonly resumeService: ResumeService) {}
 
+  @ApiBearerAuth()
   @UseGuards(JwtGuard)
   @Get('resume')
   async getResume() {
     return this.resumeService.getResume();
   }
 
+  @ApiBearerAuth()
   @UseGuards(JwtGuard)
   @Get('resume/:id')
   async getResumeById(@Param('id', ParseIntPipe) id: number) {
     return this.resumeService.getResumeById(id);
   }
 
+  @ApiBearerAuth()
   @UseGuards(JwtGuard)
   @Post('create-resume')
   async createResume(
@@ -45,6 +49,7 @@ export class ResumeController {
     );
   }
 
+  @ApiBearerAuth()
   @UseGuards(JwtGuard)
   @Put('update-resume/:id')
   async updateResume(
@@ -60,6 +65,7 @@ export class ResumeController {
     );
   }
 
+  @ApiBearerAuth()
   @UseGuards(JwtGuard)
   @Delete('delete-resume/:id')
   async deleteResume(

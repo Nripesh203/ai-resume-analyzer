@@ -16,6 +16,7 @@ import { CreateJobDto } from '../dto/create-job.dto';
 import { JwtGuard } from '../common/guards/jwt.guard';
 import { UpdateJobDto } from '../dto/update-job.dto';
 import { PatchJobDto } from '../dto/Patch-Job.dto';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 @Controller('api')
 export class JobController {
@@ -31,12 +32,14 @@ export class JobController {
     return this.jobService.getJobById(id);
   }
 
+  @ApiBearerAuth()
   @UseGuards(JwtGuard)
   @Post('create-job')
   async createJob(@Body() createJobDto: CreateJobDto) {
     return this.jobService.createJob(createJobDto);
   }
 
+  @ApiBearerAuth()
   @UseGuards(JwtGuard)
   @Put('update-job/:id')
   async updateJob(
@@ -46,12 +49,14 @@ export class JobController {
     return this.jobService.updateJob(jobId, updateJobDto);
   }
 
+  @ApiBearerAuth()
   @UseGuards(JwtGuard)
   @Delete('delete-job/:id')
   async deleteJob(@Param('id', ParseIntPipe) jobId: number) {
     return this.jobService.deleteJob(jobId);
   }
 
+  @ApiBearerAuth()
   @UseGuards(JwtGuard)
   @Patch('patch-update-job/:id')
   async patchJob(

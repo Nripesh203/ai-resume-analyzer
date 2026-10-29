@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   ParseIntPipe,
+  Patch,
   Post,
   Put,
   Req,
@@ -14,6 +15,7 @@ import { JobService } from './jobs.service';
 import { CreateJobDto } from '../dto/create-job.dto';
 import { JwtGuard } from '../common/guards/jwt.guard';
 import { UpdateJobDto } from '../dto/update-job.dto';
+import { PatchJobDto } from '../dto/Patch-Job.dto';
 
 @Controller('api')
 export class JobController {
@@ -48,5 +50,14 @@ export class JobController {
   @Delete('delete-job/:id')
   async deleteJob(@Param('id', ParseIntPipe) jobId: number) {
     return this.jobService.deleteJob(jobId);
+  }
+
+  @UseGuards(JwtGuard)
+  @Patch('patch-update-job/:id')
+  async patchJob(
+    @Param('id', ParseIntPipe) jobId: number,
+    @Body() patchJobDto: PatchJobDto,
+  ) {
+    return this.jobService.patchJob(jobId, patchJobDto);
   }
 }

@@ -2,6 +2,7 @@ import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Pool } from 'pg';
 import { CreateJobDto } from '../dto/create-job.dto';
 import { UpdateJobDto } from '../dto/update-job.dto';
+import { PatchJobDto } from '../dto/Patch-Job.dto';
 
 @Injectable()
 export class JobService {
@@ -51,6 +52,27 @@ export class JobService {
       updateJobDto.job_title,
       updateJobDto.description,
       updateJobDto.requirements,
+      jobId,
+    ]);
+
+    if (result.rows.length === 0)
+      throw new NotFoundException(`Job with ID ${jobId} not found.`);
+
+    return result.rows[0];
+  }
+
+  async patchJob(jobId: number, patchJobDto: PatchJobDto) {
+    const query = `UPDATE jobs
+                   SET job_title = COALESCE($1, job_title),
+                    description =COALESCE($2, description),
+                     requirements = COALESCE($3, requirements)
+                   WHERE job_id = $4
+                   RETURNING *`;
+
+    const result = await this.pool.query(query, [
+      patchJobDto.job_title,
+      patchJobDto.description,
+      patchJobDto.requirements,
       jobId,
     ]);
 

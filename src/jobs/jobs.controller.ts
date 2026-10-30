@@ -17,6 +17,8 @@ import { JwtGuard } from '../common/guards/jwt.guard';
 import { UpdateJobDto } from '../dto/update-job.dto';
 import { PatchJobDto } from '../dto/Patch-Job.dto';
 import { ApiBearerAuth } from '@nestjs/swagger';
+import { RolesGuard } from '../common/guards/roles.guard';
+import { ROLES } from '../auth/decorators/roles.decorator';
 
 @Controller('api')
 export class JobController {
@@ -33,14 +35,16 @@ export class JobController {
   }
 
   @ApiBearerAuth()
-  @UseGuards(JwtGuard)
+  @UseGuards(JwtGuard, RolesGuard)
+  @ROLES('admin', 'staff')
   @Post('create-job')
   async createJob(@Body() createJobDto: CreateJobDto) {
     return this.jobService.createJob(createJobDto);
   }
 
   @ApiBearerAuth()
-  @UseGuards(JwtGuard)
+  @UseGuards(JwtGuard, RolesGuard)
+  @ROLES('admin', 'staff')
   @Put('update-job/:id')
   async updateJob(
     @Body() updateJobDto: UpdateJobDto,
@@ -50,14 +54,16 @@ export class JobController {
   }
 
   @ApiBearerAuth()
-  @UseGuards(JwtGuard)
+  @UseGuards(JwtGuard, RolesGuard)
+  @ROLES('admin', 'staff')
   @Delete('delete-job/:id')
   async deleteJob(@Param('id', ParseIntPipe) jobId: number) {
     return this.jobService.deleteJob(jobId);
   }
 
   @ApiBearerAuth()
-  @UseGuards(JwtGuard)
+  @UseGuards(JwtGuard, RolesGuard)
+  @ROLES('admin', 'staff')
   @Patch('patch-update-job/:id')
   async patchJob(
     @Param('id', ParseIntPipe) jobId: number,

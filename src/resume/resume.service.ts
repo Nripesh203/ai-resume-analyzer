@@ -2,10 +2,14 @@ import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Pool } from 'pg';
 import { CreateResumeDto } from '../dto/create-resume.dto';
 import { UpdateResumeDto } from '../dto/update-resume.dto';
+import { CloudinaryService } from './cloudinary.service';
 
 @Injectable()
 export class ResumeService {
-  constructor(@Inject('PG_POOL') private pool: Pool) {}
+  constructor(
+    @Inject('PG_POOL') private pool: Pool,
+    private cloudinaryService: CloudinaryService,
+  ) {}
 
   async createResume(userId: number, createResumeDto: CreateResumeDto) {
     const query = `INSERT INTO resume (user_id, resume_text)
@@ -75,5 +79,36 @@ export class ResumeService {
       throw new NotFoundException(`Resume with ID ${resumeId} not found.`);
 
     return `Resume with ID ${resumeId} deleted successfully.`;
+  }
+
+  async uploadResume(userId: number, file: Express.Multer.File) {
+    const asset = await this.cloudinaryService.uploadResume(file, userId);
+
+    const query = `INSERT INTO resume_uploads(user_id, original_filename, object_key, mime_type, file_size_bytes)
+                   VALUES ($1, $2, $3, $4, $5)
+                   RETURNING *`;
+
+    try {
+      const result = await this.pool.query(query, [
+        userId,
+        file.originalname,
+        asset.publicId,
+        file.mimetype,
+        asset.bytes,
+      ]);
+
+      return result.rows[0];
+    } catch (databaseError) {
+      try {
+        await this.cloudinaryService.deleteResume(asset.publicId);
+      } catch (cleanupError) {
+        throw new AggregateError(
+          [databaseError, cleanupError],
+          'Resume metadata insert failed, and Cloudinary cleanup failed.',
+        );
+      }
+
+      throw databaseError;
+    }
   }
 }

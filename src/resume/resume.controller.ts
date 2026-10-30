@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -8,13 +9,16 @@ import {
   Post,
   Put,
   Req,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ResumeService } from './resume.service';
 import { CreateResumeDto } from '../dto/create-resume.dto';
 import { JwtGuard } from '../common/guards/jwt.guard';
 import { UpdateResumeDto } from '../dto/update-resume.dto';
-import { ApiBearerAuth } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiConsumes } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('api')
 export class ResumeController {
@@ -74,5 +78,50 @@ export class ResumeController {
     @Param('id', ParseIntPipe) resumeId: number,
   ) {
     return this.resumeService.deleteResume(Number(req.user.userId), resumeId);
+  }
+
+  @ApiBearerAuth()
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: { type: 'string', format: 'binary' },
+      },
+      required: ['file'],
+    },
+  })
+  @UseGuards(JwtGuard)
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { fileSize: 5 * 1024 * 1024 },
+      fileFilter: (_req, file, callback) => {
+        const allowedTypes = [
+          'application/pdf',
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        ];
+
+        if (!allowedTypes.includes(file.mimetype)) {
+          callback(
+            new BadRequestException('Only PDF and DOCX file are accepted'),
+            false,
+          );
+          return;
+        }
+        callback(null, true);
+      },
+    }),
+  )
+  @Post('resume/upload')
+  async uploadResume(
+    @Req()
+    req: Request & { user: { userId: number | string; username: string } },
+    @UploadedFile() file: Express.Multer.File | undefined,
+  ) {
+    if (!file) {
+      throw new BadRequestException('A resume file is required.');
+    }
+
+    return this.resumeService.uploadResume(Number(req.user.userId), file);
   }
 }

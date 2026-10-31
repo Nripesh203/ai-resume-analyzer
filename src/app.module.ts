@@ -6,6 +6,7 @@ import { DatabaseModule } from './database/database.module';
 import { AuthModule } from './auth/auth.module';
 import { ResumeModule } from './resume/resume.module';
 import { JobModule } from './jobs/jobs.module';
+import { AiMatchingModule } from './ai-matching/ai-matching.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { JobModule } from './jobs/jobs.module';
     AuthModule,
     ResumeModule,
     JobModule,
+    AiMatchingModule,
     ConfigModule.forRoot({ isGlobal: true }),
   ],
   controllers: [AppController],

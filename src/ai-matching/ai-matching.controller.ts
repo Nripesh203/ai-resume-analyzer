@@ -16,7 +16,7 @@ export class AiMatchingController {
     req: Request & { user: { userId: number | string; username: string } },
     @Body() matchRequestdto: MatchRequestDto,
   ) {
-    return this.aiMatchingService.getMatchInputs(
+    return this.aiMatchingService.match(
       Number(req.user.userId),
       matchRequestdto,
     );

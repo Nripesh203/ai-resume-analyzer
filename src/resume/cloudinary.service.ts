@@ -13,7 +13,9 @@ export class CloudinaryService {
     });
   }
 
-  uploadResume(file: Express.Multer.File, userId: number) {
+  async uploadResume(file: Express.Multer.File, userId: number) {
+    const extension =
+      file.mimetype === 'application/pdf' ? '.pdf' : '.docx';
     return new Promise<{ publicId: string; bytes: number }>(
       (resolve, reject) => {
         const upload = cloudinary.uploader.upload_stream(
@@ -21,7 +23,7 @@ export class CloudinaryService {
             resource_type: 'raw',
             type: 'authenticated',
             folder: `resume/${userId}`,
-            public_id: randomUUID(),
+            public_id: `${randomUUID()}${extension}`,
           },
           (error, result) => {
             if (error) {

@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Inject,
   Injectable,
   InternalServerErrorException,
@@ -22,29 +23,49 @@ export class AiMatchingService {
   }
 
   async getMatchInputs(userId: number, matchRequestDto: MatchRequestDto) {
-    const query = `SELECT resume_text
-                   FROM resume
-                   WHERE resume_id = $1 AND user_id = $2`;
-    const resumeResult = await this.pool.query(query, [
-      matchRequestDto.resumeId,
-      userId,
-    ]);
+    const hasResumeId = matchRequestDto.resumeId !== undefined;
+    const hasUploadId = matchRequestDto.resumeUploadId !== undefined;
 
-    const resume = resumeResult.rows[0];
+    if (hasResumeId === hasUploadId)
+      throw new BadRequestException(
+        `Provide exactly one of resumeId or resumeUploadId.`,
+      );
 
-    if (!resume) throw new NotFoundException('Resume not found.');
+    let resumeText: string;
 
-    const job_query = `SELECT *
-                       FROM jobs
-                       WHERE job_id = $1`;
+    if (hasResumeId) {
+      const query = `SELECT resume_text 
+                      FROM resume
+                      WHERE resume_id = $1 AND user_id = $2`;
 
-    const jobResult = await this.pool.query(job_query, [matchRequestDto.jobId]);
+      const result = await this.pool.query(query, [
+        matchRequestDto.resumeId,
+        userId,
+      ]);
+      if (!result.rows[0]) throw new NotFoundException('Resume not found.');
+
+      resumeText = result.rows[0].resume_text;
+    } else {
+      const query = `SELECT extracted_text
+                     FROM resume_uploads
+                     WHERE resume_upload_id = $1 AND user_id = $2`;
+
+      const result = await this.pool.query(query, [
+        matchRequestDto.resumeUploadId,
+        userId,
+      ]);
+
+      if (!result.rows[0]) throw new NotFoundException(`Resume not found.`);
+
+      resumeText = result.rows[0].extracted_text;
+    }
+    const query = `SELECT * FROM jobs WHERE job_id = $1`;
+    const jobResult = await this.pool.query(query, [matchRequestDto.jobId]);
 
     const job = jobResult.rows[0];
+    if (!job) throw new NotFoundException('Job not found.');
 
-    if (!job) throw new NotFoundException(`Job not found.`);
-
-    return { resumeText: resume.resume_text, job };
+    return { resumeText, job };
   }
 
   async match(userId: number, matchRequestDto: MatchRequestDto) {

@@ -3,12 +3,14 @@ import { Pool } from 'pg';
 import { CreateResumeDto } from '../dto/create-resume.dto';
 import { UpdateResumeDto } from '../dto/update-resume.dto';
 import { CloudinaryService } from './cloudinary.service';
+import { ExtractionService } from './extraction.service';
 
 @Injectable()
 export class ResumeService {
   constructor(
     @Inject('PG_POOL') private pool: Pool,
     private cloudinaryService: CloudinaryService,
+    private extractionService: ExtractionService,
   ) {}
 
   async createResume(userId: number, createResumeDto: CreateResumeDto) {
@@ -82,11 +84,12 @@ export class ResumeService {
   }
 
   async uploadResume(userId: number, file: Express.Multer.File) {
+    const extractedText = await this.extractionService.extractFile(file);
     const asset = await this.cloudinaryService.uploadResume(file, userId);
 
-    const query = `INSERT INTO resume_uploads(user_id, original_filename, object_key, mime_type, file_size_bytes)
-                   VALUES ($1, $2, $3, $4, $5)
-                   RETURNING *`;
+    const query = `INSERT INTO resume_uploads(user_id, original_filename, object_key, mime_type, file_size_bytes, extracted_text)
+                   VALUES ($1, $2, $3, $4, $5, $6)
+                   RETURNING resume_upload_id, user_id, original_filename, object_key, mime_type, file_size_bytes, created_at`;
 
     try {
       const result = await this.pool.query(query, [
@@ -95,6 +98,7 @@ export class ResumeService {
         asset.publicId,
         file.mimetype,
         asset.bytes,
+        extractedText,
       ]);
 
       return result.rows[0];

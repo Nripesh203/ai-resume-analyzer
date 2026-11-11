@@ -1,14 +1,24 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsInt, Min } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsInt, IsOptional, Min } from 'class-validator';
 
 export class MatchRequestDto {
-  @ApiProperty({ example: 1, description: 'ID of the saved resume' })
+  @ApiPropertyOptional({
+    example: 1,
+    description: 'ID of the saved text resume',
+  })
+  @IsOptional()
   @IsInt()
   @Min(1)
-  resumeId: number;
+  resumeId?: number;
+
+  @ApiPropertyOptional({ example: 1, description: 'ID of an uploaded resume' })
+  @IsOptional()
+  @Min(1)
+  @IsInt()
+  resumeUploadId?: number;
 
   @ApiProperty({ example: 1, description: 'ID of the saved job' })
-  @Min(1)
   @IsInt()
+  @Min(1)
   jobId: number;
 }

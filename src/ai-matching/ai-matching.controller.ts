@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import { AiMatchingService } from './ai-matching.service';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { JwtGuard } from '../common/guards/jwt.guard';
@@ -20,5 +20,15 @@ export class AiMatchingController {
       Number(req.user.userId),
       matchRequestdto,
     );
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtGuard)
+  @Get('evaluations')
+  async getEvaluations(
+    @Req()
+    req: Request & { user: { userId: number | string; username: string } },
+  ) {
+    return this.aiMatchingService.getEvaluations(Number(req.user.userId));
   }
 }

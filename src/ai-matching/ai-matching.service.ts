@@ -175,4 +175,16 @@ export class AiMatchingService {
 
     return savedEvaluation.rows[0];
   }
+
+  async getEvaluations(userId: number) {
+    const query = `SELECT ai_evaluation_id, user_id, job_id, resume_id, resume_upload_id, match_percentage, summary, matched_skills, missing_skills, recommendations, created_at
+                   FROM ai_evaluations
+                   WHERE user_id = $1
+                   ORDER BY created_at DESC
+                   LIMIT 50`;
+
+    const result = await this.pool.query(query, [userId]);
+
+    return result.rows;
+  }
 }

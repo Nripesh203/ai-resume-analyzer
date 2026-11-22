@@ -27,15 +27,22 @@ export class ResumeController {
   @ApiBearerAuth()
   @UseGuards(JwtGuard)
   @Get('resume')
-  async getResume() {
-    return this.resumeService.getResume();
+  async getResume(
+    @Req()
+    req: Request & { user: { userId: number | string; username: string } },
+  ) {
+    return this.resumeService.getResume(Number(req.user.userId));
   }
 
   @ApiBearerAuth()
   @UseGuards(JwtGuard)
   @Get('resume/:id')
-  async getResumeById(@Param('id', ParseIntPipe) id: number) {
-    return this.resumeService.getResumeById(id);
+  async getResumeById(
+    @Req()
+    req: Request & { user: { userId: number | string }; username: string },
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.resumeService.getResumeById(Number(req.user.userId), id);
   }
 
   @ApiBearerAuth()
@@ -123,5 +130,29 @@ export class ResumeController {
     }
 
     return this.resumeService.uploadResume(Number(req.user.userId), file);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtGuard)
+  @Get('resume-uploads')
+  async getUploadedResumes(
+    @Req()
+    req: Request & { user: { userId: number | string }; username: string },
+  ) {
+    return this.resumeService.getUploadedResumes(Number(req.user.userId));
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtGuard)
+  @Get('resume-uploads/:id')
+  async getUploadedResumeById(
+    @Req()
+    req: Request & { user: { userId: string | number }; username: string },
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.resumeService.getUploadedResumeById(
+      Number(req.user.userId),
+      id,
+    );
   }
 }

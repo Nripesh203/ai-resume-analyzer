@@ -25,25 +25,53 @@ export class ResumeService {
     return result.rows[0];
   }
 
-  async getResume() {
-    const query = `SELECT u.user_id , u.username, r.resume_text, u.created_at 
-                   FROM users u
-                   INNER JOIN resume r ON u.user_id = r.user_id;`;
-
-    const result = await this.pool.query(query);
-    return result.rows;
-  }
-
-  async getResumeById(id: number) {
+  async getResume(userId: number) {
     const query = `SELECT u.user_id , u.username, r.resume_text, u.created_at 
                    FROM users u
                    INNER JOIN resume r ON u.user_id = r.user_id
-                   WHERE resume_id = $1`;
+                   WHERE r.user_id = $1`;
 
-    const result = await this.pool.query(query, [id]);
+    const result = await this.pool.query(query, [userId]);
+    return result.rows;
+  }
+
+  async getResumeById(userId: number, id: number) {
+    const query = `SELECT u.user_id ,  u.username, r.resume_text, u.created_at 
+                   FROM users u
+                   INNER JOIN resume r ON u.user_id = r.user_id
+                   WHERE r.resume_id = $1 AND r.user_id = $2`;
+
+    const result = await this.pool.query(query, [id, userId]);
 
     if (result.rows.length === 0)
       throw new NotFoundException(`Resume with ID ${id} not found.`);
+
+    return result.rows[0];
+  }
+
+  async getUploadedResumes(userId: number) {
+    const query = `SELECT resume_upload_id, original_filename, mime_type,
+                   file_size_bytes, created_at
+                   FROM resume_uploads
+                   WHERE user_id = $1
+                   ORDER BY created_at DESC
+                   LIMIT 50`;
+
+    const result = await this.pool.query(query, [userId]);
+
+    return result.rows;
+  }
+
+  async getUploadedResumeById(userId: number, id: number) {
+    const query = `SELECT resume_upload_id, original_filename, mime_type,
+                   file_size_bytes, created_at
+                   FROM resume_uploads
+                   WHERE user_id = $1 AND resume_upload_id = $2`;
+
+    const result = await this.pool.query(query, [userId, id]);
+
+    if (!result)
+      throw new NotFoundException(`Uploaded resume with ID ${id} not found.`);
 
     return result.rows[0];
   }

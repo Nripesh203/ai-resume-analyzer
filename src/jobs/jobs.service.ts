@@ -8,19 +8,20 @@ import { PatchJobDto } from '../dto/Patch-Job.dto';
 export class JobService {
   constructor(@Inject('PG_POOL') private pool: Pool) {}
 
-  async getJobs() {
-    const query = `SELECT * FROM jobs`;
+  async getJobs(userId: number) {
+    const query = `SELECT * FROM jobs
+                   WHERE user_id = $1`;
 
-    const result = await this.pool.query(query);
+    const result = await this.pool.query(query, [userId]);
 
     return result.rows;
   }
 
-  async getJobById(id: number) {
+  async getJobById(id: number, userId: number) {
     const query = `SELECT * FROM jobs 
-                   WHERE job_id = $1`;
+                   WHERE job_id = $1 AND user_id = $2`;
 
-    const result = await this.pool.query(query, [id]);
+    const result = await this.pool.query(query, [id, userId]);
 
     if (result.rows.length === 0)
       throw new NotFoundException(`Job with ID ${id} not found.`);
@@ -28,24 +29,25 @@ export class JobService {
     return result.rows[0];
   }
 
-  async createJob(createJobDto: CreateJobDto) {
-    const query = `INSERT INTO jobs (job_title, description, requirements)
-                   VALUES ($1, $2, $3) 
+  async createJob(createJobDto: CreateJobDto, userId: number) {
+    const query = `INSERT INTO jobs (job_title, description, requirements, user_id)
+                   VALUES ($1, $2, $3, $4) 
                    RETURNING *`;
 
     const result = await this.pool.query(query, [
       createJobDto.job_title,
       createJobDto.description,
       createJobDto.requirements,
+      userId,
     ]);
 
     return result.rows[0];
   }
 
-  async updateJob(jobId: number, updateJobDto: UpdateJobDto) {
+  async updateJob(jobId: number, updateJobDto: UpdateJobDto, userId: number) {
     const query = `UPDATE jobs
                    SET job_title = $1, description = $2, requirements = $3
-                   WHERE job_id = $4
+                   WHERE job_id = $4 AND user_id = $5
                    RETURNING *`;
 
     const result = await this.pool.query(query, [
@@ -53,6 +55,7 @@ export class JobService {
       updateJobDto.description,
       updateJobDto.requirements,
       jobId,
+      userId,
     ]);
 
     if (result.rows.length === 0)
@@ -61,12 +64,12 @@ export class JobService {
     return result.rows[0];
   }
 
-  async patchJob(jobId: number, patchJobDto: PatchJobDto) {
+  async patchJob(jobId: number, patchJobDto: PatchJobDto, userId: number) {
     const query = `UPDATE jobs
                    SET job_title = COALESCE($1, job_title),
                     description =COALESCE($2, description),
                      requirements = COALESCE($3, requirements)
-                   WHERE job_id = $4
+                   WHERE job_id = $4  AND user_id = $5
                    RETURNING *`;
 
     const result = await this.pool.query(query, [
@@ -74,6 +77,7 @@ export class JobService {
       patchJobDto.description,
       patchJobDto.requirements,
       jobId,
+      userId,
     ]);
 
     if (result.rows.length === 0)
@@ -82,12 +86,12 @@ export class JobService {
     return result.rows[0];
   }
 
-  async deleteJob(jobId: number) {
+  async deleteJob(jobId: number, userId: number) {
     const query = `DELETE FROM jobs
-                   WHERE job_id = $1
+                   WHERE job_id = $1 AND user_id = $2
                    RETURNING job_id`;
 
-    const result = await this.pool.query(query, [jobId]);
+    const result = await this.pool.query(query, [jobId, userId]);
 
     if (result.rows.length === 0)
       throw new NotFoundException(`Job with ID ${jobId} not found.`);

@@ -70,7 +70,7 @@ export class ResumeService {
 
     const result = await this.pool.query(query, [userId, id]);
 
-    if (!result)
+    if (result.rows.length === 0)
       throw new NotFoundException(`Uploaded resume with ID ${id} not found.`);
 
     return result.rows[0];

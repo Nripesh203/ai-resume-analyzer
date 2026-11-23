@@ -93,8 +93,12 @@ export class AiMatchingService {
 
       resumeText = result.rows[0].extracted_text;
     }
-    const query = `SELECT * FROM jobs WHERE job_id = $1`;
-    const jobResult = await this.pool.query(query, [matchRequestDto.jobId]);
+    const query = `SELECT * FROM jobs
+                   WHERE job_id = $1 AND user_id = $2`;
+    const jobResult = await this.pool.query(query, [
+      matchRequestDto.jobId,
+      userId,
+    ]);
 
     const job = jobResult.rows[0];
     if (!job) throw new NotFoundException('Job not found.');

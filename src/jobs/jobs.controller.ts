@@ -17,58 +17,81 @@ import { JwtGuard } from '../common/guards/jwt.guard';
 import { UpdateJobDto } from '../dto/update-job.dto';
 import { PatchJobDto } from '../dto/Patch-Job.dto';
 import { ApiBearerAuth } from '@nestjs/swagger';
-import { RolesGuard } from '../common/guards/roles.guard';
-import { ROLES } from '../auth/decorators/roles.decorator';
 
 @Controller('api')
 export class JobController {
   constructor(private readonly jobService: JobService) {}
 
+  @UseGuards(JwtGuard)
   @Get('jobs')
-  async getJobs() {
-    return this.jobService.getJobs();
+  async getJobs(
+    @Req()
+    req: Request & { user: { userId: number | string }; username: string },
+  ) {
+    return this.jobService.getJobs(Number(req.user.userId));
   }
 
+  @UseGuards(JwtGuard)
   @Get('job/:id')
-  async getJobById(@Param('id', ParseIntPipe) id: number) {
-    return this.jobService.getJobById(id);
+  async getJobById(
+    @Param('id', ParseIntPipe) id: number,
+    @Req()
+    req: Request & { user: { userId: number | string }; username: string },
+  ) {
+    return this.jobService.getJobById(id, Number(req.user.userId));
   }
 
   @ApiBearerAuth()
-  @UseGuards(JwtGuard, RolesGuard)
-  @ROLES('admin', 'staff')
+  @UseGuards(JwtGuard)
   @Post('create-job')
-  async createJob(@Body() createJobDto: CreateJobDto) {
-    return this.jobService.createJob(createJobDto);
+  async createJob(
+    @Body() createJobDto: CreateJobDto,
+    @Req()
+    req: Request & { user: { userId: number | string }; username: string },
+  ) {
+    return this.jobService.createJob(createJobDto, Number(req.user.userId));
   }
 
   @ApiBearerAuth()
-  @UseGuards(JwtGuard, RolesGuard)
-  @ROLES('admin', 'staff')
+  @UseGuards(JwtGuard)
   @Put('update-job/:id')
   async updateJob(
     @Body() updateJobDto: UpdateJobDto,
     @Param('id', ParseIntPipe) jobId: number,
+    @Req()
+    req: Request & { user: { userId: number | string }; username: string },
   ) {
-    return this.jobService.updateJob(jobId, updateJobDto);
+    return this.jobService.updateJob(
+      jobId,
+      updateJobDto,
+      Number(req.user.userId),
+    );
   }
 
   @ApiBearerAuth()
-  @UseGuards(JwtGuard, RolesGuard)
-  @ROLES('admin', 'staff')
+  @UseGuards(JwtGuard)
   @Delete('delete-job/:id')
-  async deleteJob(@Param('id', ParseIntPipe) jobId: number) {
-    return this.jobService.deleteJob(jobId);
+  async deleteJob(
+    @Param('id', ParseIntPipe) jobId: number,
+    @Req()
+    req: Request & { user: { userId: number | string }; username: string },
+  ) {
+    return this.jobService.deleteJob(jobId, Number(req.user.userId));
   }
 
   @ApiBearerAuth()
-  @UseGuards(JwtGuard, RolesGuard)
-  @ROLES('admin', 'staff')
+  @UseGuards(JwtGuard)
   @Patch('patch-update-job/:id')
   async patchJob(
     @Param('id', ParseIntPipe) jobId: number,
     @Body() patchJobDto: PatchJobDto,
+    @Req()
+    req: Request & { user: { userId: number | string }; username: string },
   ) {
-    return this.jobService.patchJob(jobId, patchJobDto);
+    return this.jobService.patchJob(
+      jobId,
+      patchJobDto,
+      Number(req.user.userId),
+    );
   }
 }
